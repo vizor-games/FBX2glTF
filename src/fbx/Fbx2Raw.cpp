@@ -40,7 +40,8 @@
 #define ALTERNATIVE_SLASH_CHAR '\\'
 #endif
 
-float scaleFactor;
+float scaleFactor = 0.01F;
+const double epsilon = 1e-5f;
 
 static std::string NativeToUTF8(const std::string& str) {
 #if _WIN32
@@ -859,6 +860,10 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
       const FbxQuaternion baseRotation = baseTransform.GetQ();
       const FbxVector4 baseScaling = computeLocalScale(pNode);
 
+      bool hasTranslation = false;
+      bool hasRotation = false;
+      bool hasScale = false;
+
       RawChannel channel;
       channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
 
@@ -870,6 +875,13 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
         const FbxVector4 localTranslation = computeLocalTranslation(pNode, pTime);
         const FbxQuaternion localRotation = localTransform.GetQ();
         const FbxVector4 localScale = computeLocalScale(pNode, pTime);
+
+        hasTranslation = true;
+        hasRotation = true;
+        hasScale |=
+                    (fabs(localScale[0] - baseScaling[0]) > epsilon ||
+                    fabs(localScale[1] - baseScaling[1]) > epsilon ||
+                    fabs(localScale[2] - baseScaling[2]) > epsilon);
 
         channel.translations.push_back(toVec3f(localTranslation) * scaleFactor);
         channel.rotations.push_back(toQuatf(localRotation));
@@ -944,7 +956,16 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
           }
         }
       }
-
+      if (!hasScale) {
+          channel.scales.clear();
+      }
+      if (!hasRotation) {
+          channel.rotations.clear();
+      }
+      if (!hasTranslation) {
+          channel.translations.clear();
+      }
+      
       animation.channels.emplace_back(channel);
 
       totalSizeInBytes += channel.translations.size() * sizeof(channel.translations[0]) +
