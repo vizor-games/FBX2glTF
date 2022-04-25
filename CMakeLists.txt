@@ -13,6 +13,7 @@ if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif ()
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 ")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
@@ -197,10 +198,12 @@ if (NOT MSVC)
   target_compile_options(libFBX2glTF PRIVATE
     "-Wno-null-dereference"
     "-Wunused"
+    "-O0"
     )
   target_compile_options(FBX2glTF PRIVATE
     "-Wno-null-dereference"
     "-Wunused"
+    "-O0"
     )
 endif()
 
